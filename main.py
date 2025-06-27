@@ -1,12 +1,28 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 import requests
-
+import os
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
 
 LOCK_URL = "http://192.168.1.82:9980/1.0/lock"
 USER_URL = "http://192.168.1.82:9980/1.0/user"
-
-@app.route('/lock_uid', methods=['GET'])
+PROXY_TARGET = "http://server.com:52774"
+@app.route('/api/air/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+def proxy_air(path):
+    url = f"{PROXY_TARGET}/{path}"
+    resp = requests.request(
+        method=requests.method,
+        url=url,
+        headers={key: value for key, value in request.headers if key.lower() != 'host'},
+        data=request.get_data(),
+        cookies=request.cookies,
+        allow_redirects=False
+    )
+    exclude_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in exclude_headers]
+    response = Response(resp.content, resp.status_code, headers)
+    return response
 def get_lock_uid():
     try:
         response = requests.put(LOCK_URL)
@@ -57,9 +73,15 @@ def user_with_lock():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching user: {e}"}), 500
 
+@app.route('/userlist', methods=['GET'])
+def get_user_list():
+    return user_with_lock()
+
 @app.route('/', methods=['GET'])
 def root_user_with_lock():
     return user_with_lock()
 
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
