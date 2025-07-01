@@ -5,8 +5,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-LOCK_URL = "http://192.168.1.82:9980/1.0/lock"
-USER_URL = "http://192.168.1.82:9980/1.0/user"
+LOCK_URL = "http://192.168.1.83:9980/1.0/lock"
+USER_URL = "http://192.168.1.83:9980/1.0/user"
 PROXY_TARGET = "http://server.com:52774"
 @app.route('/api/air/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def proxy_air(path):
@@ -80,8 +80,144 @@ def get_user_list():
 @app.route('/', methods=['GET'])
 def root_user_with_lock():
     return user_with_lock()
-
-
-
+@app.route('/Camera', methods=['GET'])
+def get_camera():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    camera_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    try:
+        camera_response = requests.get(camera_url)
+        camera_response.raise_for_status()
+        camera_data = camera_response.json()
+        return jsonify(camera_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching camera: {e}"}), 500
+@app.route('/CameraControl', methods=['GET','POST'])
+def camera_control():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    control_url = (
+        f"http://192.168.1.83:9980/1.0/camera/control/start?"
+        f"lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
+    )
+    try:
+        control_response = requests.post(control_url)
+        control_response.raise_for_status()
+        control_data = control_response.json()
+        return jsonify(control_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching camera control: {e}"}), 500
+@app.route('/SlaveMode', methods=['GET','POST'])
+def slave_mode():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    slave_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    try:
+        slave_response = requests.get(slave_url)
+        slave_response.raise_for_status()
+        slave_data = slave_response.json()
+        return jsonify(slave_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching slave mode: {e}"}), 500
+    
+@app.route('/RecogMode', methods=['GET','POST'])
+def recog_mode():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    recog_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    try:
+        recog_response = requests.get(recog_url)
+        recog_response.raise_for_status()
+        recog_data = recog_response.json()
+        return jsonify(recog_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching recog mode: {e}"}), 500
+    
+@app.route('/StartCamera', methods=['GET','POST'])
+def start_camera():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    start_url = f"http://192.168.1.83:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
+    try:
+        camera_response = requests.get(start_url)
+        camera_response.raise_for_status()
+        camera_data = camera_response.json()
+        return jsonify(camera_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching start camera: {e}"}), 500
+    
+@app.route('/StopCamera', methods=['GET','POST'])
+def stop_camera():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    stop_url = f"http://192.168.1.83:9980/1.0/camera/control/stop?lock_uid={lock_uid}"
+    try:
+        stop_response = requests.get(stop_url)
+        stop_response.raise_for_status()
+        stop_data = stop_response.json()
+        return jsonify(stop_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching stop camera: {e}"}), 500
+@app.route('/MatchData', methods=['GET','POST'])
+def match_data():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    match_url = f"http://192.168.1.83:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
+    try:
+        match_response = requests.get(match_url)
+        match_response.raise_for_status()
+        match_data = match_response.json()
+        return jsonify(match_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching match data: {e}"}), 500
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
