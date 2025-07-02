@@ -35,8 +35,8 @@ http://192.168.1.12:5001/LastUserDetail
 
 ---------------Building the installer as service--------------------------
 1. pip install pyinstaller
-2. pyinstaller --onefile main.py
+2. pyinstaller main.spec
 3. Install Inno Setup (if not already installed)
 4. Open Inno Setup Compiler
-5. Open Your setup.iss Script
-6. 
+5. Open Your setup.iss Script & compile
+6. When finished, it will show you the output folder & application is built in installer folder
