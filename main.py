@@ -2,11 +2,25 @@ from flask import Flask, jsonify, request, Response
 import requests
 import os
 from flask_cors import CORS
+import winreg
+
 app = Flask(__name__)
 CORS(app)
 
-LOCK_URL = "http://192.168.1.83:9980/1.0/lock"
-USER_URL = "http://192.168.1.83:9980/1.0/user"
+def get_device_ip_from_registry():
+    try:
+        registry_path = r"SOFTWARE\IrishMiddleware"
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, registry_path, 0, winreg.KEY_READ) as key:
+            value, _ = winreg.QueryValueEx(key, "DeviceIP")
+            return value
+    except Exception as e:
+        print(f"Error reading DeviceIP from registry: {e}")
+        return None
+
+DEVICE_IP = get_device_ip_from_registry() or "192.168.1.83"  # fallback if not set
+
+LOCK_URL = f"http://{DEVICE_IP}:9980/1.0/lock"
+USER_URL = f"http://{DEVICE_IP}:9980/1.0/user"
 PROXY_TARGET = "http://server.com:52774"
 @app.route('/api/air/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def proxy_air(path):
@@ -91,7 +105,7 @@ def get_camera():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    camera_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    camera_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     try:
         camera_response = requests.get(camera_url)
         camera_response.raise_for_status()
@@ -111,7 +125,7 @@ def camera_control():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     control_url = (
-        f"http://192.168.1.83:9980/1.0/camera/control/start?"
+        f"http://{DEVICE_IP}:9980/1.0/camera/control/start?"
         f"lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
     )
     try:
@@ -132,7 +146,7 @@ def slave_mode():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    slave_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    slave_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     try:
         slave_response = requests.get(slave_url)
         slave_response.raise_for_status()
@@ -152,7 +166,7 @@ def recog_mode():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    recog_url = f"http://192.168.1.83:9980/1.0/camera?lock_uid={lock_uid}"
+    recog_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     try:
         recog_response = requests.get(recog_url)
         recog_response.raise_for_status()
@@ -172,7 +186,7 @@ def start_camera():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    start_url = f"http://192.168.1.83:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
+    start_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
     try:
         camera_response = requests.get(start_url)
         camera_response.raise_for_status()
@@ -192,7 +206,7 @@ def stop_camera():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    stop_url = f"http://192.168.1.83:9980/1.0/camera/control/stop?lock_uid={lock_uid}"
+    stop_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/stop?lock_uid={lock_uid}"
     try:
         stop_response = requests.get(stop_url)
         stop_response.raise_for_status()
@@ -211,7 +225,7 @@ def match_data():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    match_url = f"http://192.168.1.83:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
+    match_url = f"http://{DEVICE_IP}:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
     try:
         match_response = requests.get(match_url)
         match_response.raise_for_status()
@@ -230,7 +244,7 @@ def last_user_detail():
             return jsonify({"error": f"lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
-    match_url = f"http://192.168.1.83:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
+    match_url = f"http://{DEVICE_IP}:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
     try:
         match_response = requests.get(match_url)
         match_response.raise_for_status()

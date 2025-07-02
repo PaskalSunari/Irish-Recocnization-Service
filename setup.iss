@@ -1,6 +1,6 @@
 #define MyAppName "Irish Middleware"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "Your Company"
+#define MyAppPublisher "Search Technology"
 #define MyAppExeName "main.exe"
 
 [Setup]
@@ -15,6 +15,8 @@ OutputBaseFilename=IrishMiddleware_Setup
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=admin
+SetupIconFile=eye-recognition.ico
+UninstallDisplayIcon={app}\eye-recognition.ico
 
 [Files]
 ; Main application executable
@@ -22,6 +24,7 @@ Source: "dist\main.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NSSM service manager
 Source: "nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; Add any other required files here
+Source: "eye-recognition.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Run]
 ; Install and start the service
@@ -38,7 +41,38 @@ Filename: "{app}\nssm.exe"; Parameters: "remove IrishMiddleware confirm"; Flags:
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "http://localhost:5000/"
-Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"; IconFilename: "{app}\eye-recognition.ico"
 
 [Messages]
 FinishedLabel=Setup has finished installing [name] on your computer. The service is now running and will start automatically when Windows starts.
+PrivilegesRequired=Administrator privileges are required to install Irish Middleware.
+
+[Code]
+var
+  DeviceIPPage: TInputQueryWizardPage;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True; // Continue setup
+end;
+
+procedure InitializeWizard;
+begin
+  DeviceIPPage := CreateInputQueryPage(
+    wpWelcome,
+    'Device IP Address',
+    'Please enter the IP address of your device.',
+    'The application needs to know the device IP address to function properly.'
+  );
+  DeviceIPPage.Add('Device IP:', False);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+  begin
+    RegWriteStringValue(
+      HKLM, 'Software\IrishMiddleware', 'DeviceIP', DeviceIPPage.Values[0]
+    );
+  end;
+end;
