@@ -219,5 +219,28 @@ def match_data():
         return jsonify(match_data), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching match data: {e}"}), 500
+@app.route('/LastUserDetail', methods=['GET'])
+def last_user_detail():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
+    match_url = f"http://192.168.1.83:9980/1.0/match-data/38118632-534a-11f0-aa39-503f98007277?lock_uid={lock_uid}"
+    try:
+        match_response = requests.get(match_url)
+        match_response.raise_for_status()
+        match_data = match_response.json()
+        items = match_data.get("items", [])
+        if not items:
+            return jsonify({"error": "No items found in match data"}), 404
+        last_user = items[-1]
+        return jsonify(last_user), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error fetching last user detail: {e}"}), 500 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
