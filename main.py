@@ -148,7 +148,7 @@ def slave_mode():
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     slave_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     try:
-        slave_response = requests.get(slave_url)
+        slave_response = requests.post(slave_url)
         slave_response.raise_for_status()
         slave_data = slave_response.json()
         return jsonify(slave_data), 200
@@ -168,7 +168,7 @@ def recog_mode():
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     recog_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     try:
-        recog_response = requests.get(recog_url)
+        recog_response = requests.post(recog_url)
         recog_response.raise_for_status()
         recog_data = recog_response.json()
         return jsonify(recog_data), 200
@@ -177,6 +177,7 @@ def recog_mode():
     
 @app.route('/StartCamera', methods=['GET','POST'])
 def start_camera():
+    print(f"break point missed---")
     try:
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
@@ -188,7 +189,7 @@ def start_camera():
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     start_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
     try:
-        camera_response = requests.get(start_url)
+        camera_response = requests.post(start_url)
         camera_response.raise_for_status()
         camera_data = camera_response.json()
         return jsonify(camera_data), 200
@@ -197,6 +198,7 @@ def start_camera():
     
 @app.route('/StopCamera', methods=['GET','POST'])
 def stop_camera():
+    print(f"break point Status code---")
     try:
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
@@ -208,9 +210,13 @@ def stop_camera():
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     stop_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/stop?lock_uid={lock_uid}"
     try:
-        stop_response = requests.get(stop_url)
+        print(f"Sending GET request to {stop_url}") 
+        stop_response = requests.post(stop_url)
         stop_response.raise_for_status()
-        stop_data = stop_response.json()
+        stop_data = stop_response.json()              
+        print(f"GET request sent. Status code: {stop_response.status_code}")
+        print(f"Response headers: {stop_response.headers}")
+        print(f"Response body: {stop_response.text}")
         return jsonify(stop_data), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching stop camera: {e}"}), 500

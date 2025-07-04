@@ -26,7 +26,7 @@ http://192.168.1.12:5001/RecogMode
 **Start Camera**
 http://192.168.1.12:5001/StartCamera
 **Stop Camera**
-http://192.168.1.12:5001/StartCamera
+http://192.168.1.12:5001/StopCamera
 **Match Data**
 http://192.168.1.12:5001/MatchData
 **Last User in the List**
