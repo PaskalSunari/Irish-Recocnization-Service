@@ -7,6 +7,10 @@ import winreg
 app = Flask(__name__)
 CORS(app)
 
+@app.before_request
+def before_request_func():
+    print("Received request:", request.method, request.path)
+
 def get_device_ip_from_registry():
     try:
         registry_path = r"SOFTWARE\IrishMiddleware"
@@ -135,9 +139,10 @@ def camera_control():
         return jsonify(control_data), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching camera control: {e}"}), 500
-@app.route('/SlaveMode', methods=['GET','POST'])
-def slave_mode():
+@app.route('/SlaveMode', methods=['POST'])
+def slave_mode():    
     try:
+        print(f"Sending post request to Paskal ")
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
         lock_data = lock_response.json()
@@ -147,8 +152,22 @@ def slave_mode():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     slave_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
-    try:
-        slave_response = requests.post(slave_url)
+    payload = {
+        "serial_number": "OA1405A031576",  # Use the correct serial number for your device
+        "camera_mode": "Slave",
+        "audio_enabled": True
+    }
+    headers = {
+          "Content-Type": "application/json"
+    }
+    try:       
+        print(f"slave_url: {slave_url}")
+        print(f"lock_uid: {lock_uid}")
+        print("POST", slave_url)
+        print("Headers:", headers)
+        print("Payload:", payload)
+        with requests.Session() as session:
+            slave_response = session.post(slave_url, headers=headers, json=payload) 
         slave_response.raise_for_status()
         slave_data = slave_response.json()
         return jsonify(slave_data), 200
@@ -176,9 +195,9 @@ def recog_mode():
         return jsonify({"error": f"Error fetching recog mode: {e}"}), 500
     
 @app.route('/StartCamera', methods=['GET','POST'])
-def start_camera():
-    print(f"break point missed---")
+def start_camera():   
     try:
+        print(f"Hello durgen dai")
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
         lock_data = lock_response.json()
@@ -188,6 +207,7 @@ def start_camera():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     start_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
+    print(f"Sending POST request to {start_url}")
     try:
         camera_response = requests.post(start_url)
         camera_response.raise_for_status()
