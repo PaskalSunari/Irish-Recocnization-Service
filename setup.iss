@@ -1,6 +1,6 @@
 #define MyAppName "Irish Middleware"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "Search Technology"
+#define MyAppPublisher "Search Technology (Nepal) Pvt Ltd"
 #define MyAppExeName "main.exe"
 
 [Setup]

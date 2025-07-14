@@ -7,10 +7,6 @@ import winreg
 app = Flask(__name__)
 CORS(app)
 
-@app.before_request
-def before_request_func():
-    print("Received request:", request.method, request.path)
-
 def get_device_ip_from_registry():
     try:
         registry_path = r"SOFTWARE\IrishMiddleware"
@@ -139,7 +135,7 @@ def camera_control():
         return jsonify(control_data), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching camera control: {e}"}), 500
-@app.route('/SlaveMode', methods=['POST'])
+@app.route('/SlaveMode', methods=['GET','POST'])
 def slave_mode():    
     try:
         print(f"Sending post request to Paskal ")
@@ -161,13 +157,7 @@ def slave_mode():
           "Content-Type": "application/json"
     }
     try:       
-        print(f"slave_url: {slave_url}")
-        print(f"lock_uid: {lock_uid}")
-        print("POST", slave_url)
-        print("Headers:", headers)
-        print("Payload:", payload)
-        with requests.Session() as session:
-            slave_response = session.post(slave_url, headers=headers, json=payload) 
+        slave_response = requests.post(slave_url, headers=headers, json=payload) 
         slave_response.raise_for_status()
         slave_data = slave_response.json()
         return jsonify(slave_data), 200
