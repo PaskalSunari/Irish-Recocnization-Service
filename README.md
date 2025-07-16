@@ -31,6 +31,8 @@ http://192.168.1.12:5001/StopCamera
 http://192.168.1.12:5001/MatchData
 **Last User in the List**
 http://192.168.1.12:5001/LastUserDetail
+**Live Face Preview**
+http://192.168.1.12:5001/LivePreview
 
 
 ---------------Building the installer as service--------------------------
