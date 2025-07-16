@@ -138,7 +138,6 @@ def camera_control():
 @app.route('/SlaveMode', methods=['GET','POST'])
 def slave_mode():    
     try:
-        print(f"Sending post request to Paskal ")
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
         lock_data = lock_response.json()
@@ -187,7 +186,6 @@ def recog_mode():
 @app.route('/StartCamera', methods=['GET','POST'])
 def start_camera():   
     try:
-        print(f"Hello durgen dai")
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
         lock_data = lock_response.json()
@@ -197,7 +195,6 @@ def start_camera():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     start_url = f"http://{DEVICE_IP}:9980/1.0/camera/control/start?lock_uid={lock_uid}&face_mode=true&glasses_mode=false&both_eye_mode=false&either_eye_mode=true"
-    print(f"Sending POST request to {start_url}")
     try:
         camera_response = requests.post(start_url)
         camera_response.raise_for_status()
@@ -272,5 +269,31 @@ def last_user_detail():
         return jsonify(last_user), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching last user detail: {e}"}), 500 
+@app.route('/LivePreview', methods = ['GET'])
+def live_face_preview():
+    try:
+        lock_response = requests.put(LOCK_URL)
+        lock_response.raise_for_status()
+        lock_data = lock_response.json()
+        lock_uid = lock_data.get("lock_uid")
+        if not lock_uid:
+            return jsonify({"error": f"lock_uid not found in response"}), 404
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error in fetching lock UID: {e}"}), 500
+    face_url = f"http://{DEVICE_IP}:9980/1.0/preview?lock_uid={lock_uid}"
+    try:
+        face_response = requests.get(face_url)
+        face_response.raise_for_status()
+        print(f"Face response status: {face_response.status_code}")
+        print(f"Face response content: {face_response.text}")
+        if face_response.status_code == 204 or not face_response.text.strip():
+            return jsonify({"error": "No content returned from device (204 No Content)"}), 204
+        face_data = face_response.json()
+        return jsonify(face_data), 200
+    except requests.RequestException as e:
+        return jsonify({"error": f"Error in fetching match data: {e}"}), 500
+    except ValueError as ve:
+        return jsonify({"error": "Device did not return valid JSON", "content": face_response.text}), 500
+        
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
