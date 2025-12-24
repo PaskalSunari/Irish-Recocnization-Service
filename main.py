@@ -3,13 +3,15 @@ import requests
 import os
 from flask_cors import CORS
 import winreg
+import base64
+import re
 
 app = Flask(__name__)
 CORS(app)
 
 def get_device_ip_from_registry():
     try:
-        registry_path = r"SOFTWARE\IrishMiddleware"
+        registry_path = r"SOFTWARE\WOW6432Node\IrishMiddleware"
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, registry_path, 0, winreg.KEY_READ) as key:
             value, _ = winreg.QueryValueEx(key, "DeviceIP")
             return value
@@ -17,7 +19,7 @@ def get_device_ip_from_registry():
         print(f"Error reading DeviceIP from registry: {e}")
         return None
 
-DEVICE_IP = get_device_ip_from_registry() or "192.168.1.83"  # fallback if not set
+DEVICE_IP = get_device_ip_from_registry()   # fallback if not set
 
 LOCK_URL = f"http://{DEVICE_IP}:9980/1.0/lock"
 USER_URL = f"http://{DEVICE_IP}:9980/1.0/user"
@@ -269,7 +271,53 @@ def last_user_detail():
         return jsonify(last_user), 200
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching last user detail: {e}"}), 500 
-@app.route('/LivePreview', methods = ['GET'])
+def read_registry():
+    base_path = r"Software\SP\License\IRIS"
+
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, base_path, 0, winreg.KEY_READ)
+    except FileNotFoundError:
+        return jsonify(
+            
+            data = {
+        "licenseKey": "",
+        "mac": ""
+    }
+        )
+
+    try:
+        type_ = winreg.QueryValueEx(key, "Type")[0]
+        code = winreg.QueryValueEx(key, "Code")[0]
+        license_key = winreg.QueryValueEx(key, "LicenseKey")[0]
+        mac = winreg.QueryValueEx(key, "MAC")[0]
+        ip = winreg.QueryValueEx(key, "IP")[0]
+        computer_name = winreg.QueryValueEx(key, "ComputerName")[0]
+    except FileNotFoundError:
+        # If any key does not exist
+        type_ = code = license_key = mac = ip = computer_name = None
+
+    winreg.CloseKey(key)
+
+    data = {
+        "licenseKey": license_key,
+        "mac": mac
+    }
+
+    return jsonify(data)
+    
+def clean_string(s):
+    s = s.replace('\r', '')
+    s = s.replace('\n', '')
+    s = re.sub(r'\\(?![\\rntbfv\"\'\\/])', '', s)
+    return s
+
+def fix_base64_padding(b64_str):
+    missing_padding = len(b64_str) % 4
+    if missing_padding:
+        b64_str += '=' * (4 - missing_padding)
+    return b64_str
+
+@app.route('/LivePreview', methods=['GET'])
 def live_face_preview():
     try:
         lock_response = requests.put(LOCK_URL)
@@ -277,23 +325,42 @@ def live_face_preview():
         lock_data = lock_response.json()
         lock_uid = lock_data.get("lock_uid")
         if not lock_uid:
-            return jsonify({"error": f"lock_uid not found in response"}), 404
+            return jsonify({"error": "lock_uid not found in response"}), 404
     except requests.RequestException as e:
         return jsonify({"error": f"Error in fetching lock UID: {e}"}), 500
+
     face_url = f"http://{DEVICE_IP}:9980/1.0/preview?lock_uid={lock_uid}"
     try:
         face_response = requests.get(face_url)
         face_response.raise_for_status()
-        print(f"Face response status: {face_response.status_code}")
-        print(f"Face response content: {face_response.text}")
         if face_response.status_code == 204 or not face_response.text.strip():
             return jsonify({"error": "No content returned from device (204 No Content)"}), 204
+
+        # Get the device response and extract the base64 string from "face_image"
         face_data = face_response.json()
-        return jsonify(face_data), 200
+        base64_str = face_data.get("face_image")
+        if not base64_str:
+            return jsonify({"error": "No base64 image data found in device response"}), 404
+
+        # Clean, fix, decode, and re-encode
+        cleaned = clean_string(base64_str)
+        fixed = fix_base64_padding(cleaned)
+        decoded_bytes = base64.b64decode(fixed)
+        # Optionally save to file
+        with open("face.jpg", "wb") as img_file:
+            img_file.write(decoded_bytes)
+        # Re-encode for frontend
+        reencoded_base64 = base64.b64encode(decoded_bytes).decode('utf-8')
+        data=read_registry()
+        print(data)
+        return jsonify({"image_base64": reencoded_base64}), 200
+
     except requests.RequestException as e:
         return jsonify({"error": f"Error in fetching match data: {e}"}), 500
     except ValueError as ve:
         return jsonify({"error": "Device did not return valid JSON", "content": face_response.text}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error processing base64 image: {e}"}), 500
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
