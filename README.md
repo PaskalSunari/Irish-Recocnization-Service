@@ -14,28 +14,36 @@ This allows API requests to `/api/air` to be forwarded to your backend server.
 
 ---------------Routing endpoint in the api---------------
 **User list**
-http://192.168.1.12:5001/ 
+http://192.168.1.22:5001/ 
 **Camera**
-http://192.168.1.12:5001/Camera
+http://192.168.1.22:5001/Camera
 **Camera Control**
-http://192.168.1.12:5001/CameraControl
+http://192.168.1.22:5001/CameraControl
 **Slave Mode**
-http://192.168.1.12:5001/SlaveMode
+http://192.168.1.22:5001/SlaveMode
 **Recocnize Mode**
-http://192.168.1.12:5001/RecogMode
+http://192.168.1.22:5001/RecogMode
 **Start Camera**
-http://192.168.1.12:5001/StartCamera
+http://192.168.1.22:5001/StartCamera
 **Stop Camera**
-http://192.168.1.12:5001/StopCamera
+http://192.168.1.22:5001/StopCamera
 **Match Data**
-http://192.168.1.12:5001/MatchData
+http://192.168.1.22:5001/MatchData
 **Last User in the List**
-http://192.168.1.12:5001/LastUserDetail
+http://192.168.1.22:5001/LastUserDetail
 **Live Face Preview**
-http://192.168.1.12:5001/LivePreview
+http://192.168.1.22:5001/LivePreview
+
+
+---------------Environment Create-----------------------------------------
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
 
 
 ---------------Building the installer as service--------------------------
+
+
 1. pip install pyinstaller
 2. pyinstaller main.spec
 3. Install Inno Setup (if not already installed)
