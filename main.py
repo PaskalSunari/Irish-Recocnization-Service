@@ -19,7 +19,8 @@ def get_device_ip_from_registry():
         print(f"Error reading DeviceIP from registry: {e}")
         return None
 
-DEVICE_IP = get_device_ip_from_registry()   # fallback if not set
+DEVICE_IP = "192.168.1.106" 
+print(f"DEVICE_IP set to: {DEVICE_IP}")
 
 LOCK_URL = f"http://{DEVICE_IP}:9980/1.0/lock"
 USER_URL = f"http://{DEVICE_IP}:9980/1.0/user"
@@ -68,7 +69,6 @@ def get_user():
 
 @app.route('/user_with_lock', methods=['GET'])
 def user_with_lock():
-    # Step 1: Get lock_uid
     try:
         lock_response = requests.put(LOCK_URL)
         lock_response.raise_for_status()
@@ -79,7 +79,6 @@ def user_with_lock():
     except requests.RequestException as e:
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
 
-    # Step 2: Use lock_uid to get user data
     user_url = f"{USER_URL}?lock_uid={lock_uid}"
     try:
         user_response = requests.get(user_url)
@@ -150,7 +149,7 @@ def slave_mode():
         return jsonify({"error": f"Error fetching lock UID: {e}"}), 500
     slave_url = f"http://{DEVICE_IP}:9980/1.0/camera?lock_uid={lock_uid}"
     payload = {
-        "serial_number": "OA1405A031576",  # Use the correct serial number for your device
+        "serial_number": "OA1405A031576",  
         "camera_mode": "Slave",
         "audio_enabled": True
     }
@@ -293,7 +292,6 @@ def read_registry():
         ip = winreg.QueryValueEx(key, "IP")[0]
         computer_name = winreg.QueryValueEx(key, "ComputerName")[0]
     except FileNotFoundError:
-        # If any key does not exist
         type_ = code = license_key = mac = ip = computer_name = None
 
     winreg.CloseKey(key)
@@ -336,20 +334,16 @@ def live_face_preview():
         if face_response.status_code == 204 or not face_response.text.strip():
             return jsonify({"error": "No content returned from device (204 No Content)"}), 204
 
-        # Get the device response and extract the base64 string from "face_image"
         face_data = face_response.json()
         base64_str = face_data.get("face_image")
         if not base64_str:
             return jsonify({"error": "No base64 image data found in device response"}), 404
 
-        # Clean, fix, decode, and re-encode
         cleaned = clean_string(base64_str)
         fixed = fix_base64_padding(cleaned)
         decoded_bytes = base64.b64decode(fixed)
-        # Optionally save to file
         with open("face.jpg", "wb") as img_file:
             img_file.write(decoded_bytes)
-        # Re-encode for frontend
         reencoded_base64 = base64.b64encode(decoded_bytes).decode('utf-8')
         data=read_registry()
         print(data)
