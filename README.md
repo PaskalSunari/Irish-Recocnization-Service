@@ -13,26 +13,27 @@ For local frontend development, use the following proxy configuration (e.g., in 
 This allows API requests to `/api/air` to be forwarded to your backend server.
 
 ---------------Routing endpoint in the api---------------
+------192.168.1.21 ip where the service is installed---------
 **User list**
-http://192.168.1.22:5001/ 
+http://192.168.1.21:5001/ 
 **Camera**
-http://192.168.1.22:5001/Camera
+http://192.168.1.21:5001/Camera
 **Camera Control**
-http://192.168.1.22:5001/CameraControl
+http://192.168.1.21:5001/CameraControl
 **Slave Mode**
-http://192.168.1.22:5001/SlaveMode
+http://192.168.1.21:5001/SlaveMode
 **Recocnize Mode**
-http://192.168.1.22:5001/RecogMode
+http://192.168.1.21:5001/RecogMode
 **Start Camera**
-http://192.168.1.22:5001/StartCamera
+http://192.168.1.21:5001/StartCamera
 **Stop Camera**
-http://192.168.1.22:5001/StopCamera
+http://192.168.1.21:5001/StopCamera
 **Match Data**
-http://192.168.1.22:5001/MatchData
+http://192.168.1.21:5001/MatchData
 **Last User in the List**
-http://192.168.1.22:5001/LastUserDetail
+http://192.168.1.21:5001/LastUserDetail
 **Live Face Preview**
-http://192.168.1.22:5001/LivePreview
+http://192.168.1.21:5001/LivePreview
 
 
 ---------------Environment Create-----------------------------------------

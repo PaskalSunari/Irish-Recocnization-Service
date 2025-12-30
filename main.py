@@ -19,7 +19,7 @@ def get_device_ip_from_registry():
         print(f"Error reading DeviceIP from registry: {e}")
         return None
 
-DEVICE_IP = "192.168.1.106" 
+DEVICE_IP = "192.168.1.21" 
 print(f"DEVICE_IP set to: {DEVICE_IP}")
 
 LOCK_URL = f"http://{DEVICE_IP}:9980/1.0/lock"
