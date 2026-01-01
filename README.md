@@ -42,9 +42,9 @@ python -m venv .venv
 pip install -r requirements.txt
 
 
----------------Building the installer as service--------------------------
+---------------Building installer service--------------------------
 
-
+ 
 1. pip install pyinstaller
 2. pyinstaller main.spec
 3. Install Inno Setup (if not already installed)
